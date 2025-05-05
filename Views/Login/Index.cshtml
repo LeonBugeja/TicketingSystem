@@ -1,0 +1,18 @@
+﻿@{
+    ViewData["Title"] = "Login with Google";
+}
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="card shadow border-0 w-50">
+        <div class="card-header bg-dark bg-gradient text-white text-center py-4">
+            <h2 class="mb-0">Google Authentication</h2>
+        </div>
+        <div class="card-body p-5 text-center">
+            <p class="lead mb-4">Login to your account using Google.</p>
+
+            <form method="post">
+                <a asp-controller="Login" asp-action="Login" class="btn btn-success btn-lg px-5 form-control">Login</a>
+            </form>
+        </div>
+    </div>
+</div>

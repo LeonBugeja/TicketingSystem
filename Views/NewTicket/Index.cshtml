@@ -1,0 +1,112 @@
+﻿@{
+    ViewData["Title"] = "Raise a Ticket";
+}
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="card shadow border-0 w-75">
+        <div class="card-header bg-dark bg-gradient text-white text-center py-4">
+            <h2 class="mb-0">Raise A New Ticket</h2>
+        </div>
+        <div class="card-body p-4">
+            <form id="ticketForm" asp-action="Submit" method="post" enctype="multipart/form-data">
+                <div class="mb-3 text-start">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select id="priority" name="priority" class="form-select" required>
+                        <option value="">Select Priority</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter ticket title" required />
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4" placeholder="Describe the issue..." required></textarea>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label for="attachments" class="form-label">Attachments (Images)</label>
+                    <input type="file" id="attachments" name="attachments" class="form-control" multiple accept="image/*" />
+                </div>
+
+                <div id="progressContainer" class="mb-3" style="display: none;">
+                    <label class="form-label">Upload Progress</label>
+                    <div class="progress mb-2">
+                        <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated"
+                             role="progressbar" style="width: 0%">
+                            0%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">Submit Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('ticketForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const form = this;
+            const formData = new FormData(form);
+            const progressBar = document.getElementById('uploadProgress');
+            const progressContainer = document.getElementById('progressContainer');
+
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressBar.classList.remove('bg-success');
+
+            try {
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.addEventListener('progress', function(event) {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = percentComplete + '%';
+                        progressBar.textContent = percentComplete + '%';
+                    }
+                });
+
+                xhr.addEventListener('load', function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        progressBar.classList.add('bg-success');
+                        progressBar.textContent = 'Upload Complete!';
+
+                        setTimeout(() => {
+                            alert("Ticket Submitted Successfully!");
+                            form.reset();
+                            progressContainer.style.display = 'none';
+                        }, 1000);
+                    } else {
+                        alert("Upload failed. Please try again.");
+                        progressContainer.style.display = 'none';
+                    }
+                });
+
+                xhr.addEventListener('error', function() {
+                    alert("An error occurred during the upload.");
+                    progressContainer.style.display = 'none';
+                });
+
+                xhr.open('POST', form.action, true);
+                xhr.send(formData);
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+                progressContainer.style.display = 'none';
+            }
+        });
+    </script>
+}
