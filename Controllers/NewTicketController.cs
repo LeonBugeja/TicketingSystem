@@ -114,7 +114,7 @@ namespace TicketingSystem.Controllers
 
                 try
                 {
-                    await PublishToPubSub(jsonPayload);
+                    await PublishToPubSub(jsonPayload, priority);
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +140,7 @@ namespace TicketingSystem.Controllers
             return !string.IsNullOrEmpty(contentType) && contentType.StartsWith("image/");
         }
 
-        private async Task PublishToPubSub(string message)
+        private async Task PublishToPubSub(string message, string priority)
         {
             var topicName = TopicName.FromProjectTopic(_projectId, TopicId);
 
@@ -154,12 +154,24 @@ namespace TicketingSystem.Controllers
             publisher = await PublisherClient.CreateAsync(topicName,
                 new PublisherClient.ClientCreationSettings(credentials: channelCreds));
 
+            string normalizedPriority = priority?.ToLower() ?? "medium";
+            if (normalizedPriority != "high" && normalizedPriority != "medium" && normalizedPriority != "low")
+            {
+                normalizedPriority = "medium"; // Default to medium if invalid value
+                _logger.LogWarning($"Invalid priority value '{priority}' normalized to 'medium'");
+            }
+
             var pubsubMessage = new PubsubMessage
             {
-                Data = ByteString.CopyFromUtf8(message)
+                Data = ByteString.CopyFromUtf8(message),
+                Attributes =
+                {
+                    { "priority", normalizedPriority }
+                }
             };
 
             string messageId = await publisher.PublishAsync(pubsubMessage);
         }
+
     }
 }
