@@ -10,8 +10,8 @@ builder.Services.AddAuthentication(options =>
 .AddCookie()
 .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
 {
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    options.ClientId = builder.Configuration["Auth:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Auth:Google:ClientSecret"];
 });
 
 // Add services to the container.

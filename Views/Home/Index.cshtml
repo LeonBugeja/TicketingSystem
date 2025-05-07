@@ -3,11 +3,4 @@
 }
 
 <br />
-@if (Context.User.Identity.IsAuthenticated)
-{
-    <br />
-    <h3>Welcome @User.Identity.Name</h3>
 
-    <br />
-    <a asp-controller="Login" asp-action="Logout">Logout</a>
-}

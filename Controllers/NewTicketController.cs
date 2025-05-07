@@ -157,8 +157,8 @@ namespace TicketingSystem.Controllers
             string normalizedPriority = priority?.ToLower() ?? "medium";
             if (normalizedPriority != "high" && normalizedPriority != "medium" && normalizedPriority != "low")
             {
-                normalizedPriority = "medium"; // Default to medium if invalid value
-                _logger.LogWarning($"Invalid priority value '{priority}' normalized to 'medium'");
+                normalizedPriority = "Medium"; // Default to medium if invalid value
+                _logger.LogWarning($"Invalid priority value '{priority}' normalized to 'Medium'");
             }
 
             var pubsubMessage = new PubsubMessage
