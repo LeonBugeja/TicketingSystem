@@ -1,25 +1,28 @@
-using System.Diagnostics;
+using Google.Cloud.PubSub.V1;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Diagnostics;
 using TicketingSystem.Models;
+using TicketingSystem.Services;
 
 namespace TicketingSystem.Controllers;
-
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly PubSubService _pubSubService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController()
     {
-        _logger = logger;
+        _pubSubService = new PubSubService();
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (!User.Identity.IsAuthenticated)
         {
             return RedirectToAction("Index", "Login", new { area = "" });
         }
 
+        var messages = await _pubSubService.FetchMessagesAsync(durationInSeconds: 5, acknowledge: true);
         return View();
     }
 

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using TicketingSystem.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAuthentication(options =>
@@ -13,6 +15,8 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["Auth:Google:ClientId"];
     options.ClientSecret = builder.Configuration["Auth:Google:ClientSecret"];
 });
+
+builder.Services.AddScoped<PubSubService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

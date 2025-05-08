@@ -1,26 +1,24 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Google.Cloud.PubSub.V1;
 using Google.Cloud.Storage.V1;
-using Google.Protobuf;
 using Google.Apis.Auth.OAuth2;
-using Grpc.Auth;
+using TicketingSystem.Services;
 
 namespace TicketingSystem.Controllers
 {
     public class NewTicketController : Controller
     {
         private readonly string _bucketName;
-        private readonly string _projectId;
-        private const string TopicId = "tickets-topic";
         private readonly ILogger<NewTicketController> _logger;
         private readonly string _googleCredentialsJson;
+        private readonly PubSubService _pubSubService;
 
         public NewTicketController(ILogger<NewTicketController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _bucketName = "ticketing-system-bucketstore";
-            _projectId = "pftc-2025-leon";
+
+            _pubSubService = new PubSubService();
 
             _googleCredentialsJson = LoadCredentialJsonFromFile();
         }
@@ -35,6 +33,11 @@ namespace TicketingSystem.Controllers
 
         public IActionResult Index()
         {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Login", new { area = "" });
+            }
+
             return View();
         }
 
@@ -114,7 +117,7 @@ namespace TicketingSystem.Controllers
 
                 try
                 {
-                    await PublishToPubSub(jsonPayload, priority);
+                    await _pubSubService.PublishToPubSub(jsonPayload, priority);
                 }
                 catch (Exception ex)
                 {
@@ -138,39 +141,6 @@ namespace TicketingSystem.Controllers
         private bool IsImage(string contentType)
         {
             return !string.IsNullOrEmpty(contentType) && contentType.StartsWith("image/");
-        }
-
-        private async Task PublishToPubSub(string message, string priority)
-        {
-            var topicName = TopicName.FromProjectTopic(_projectId, TopicId);
-
-            PublisherClient publisher;
-
-            var credential = GoogleCredential.FromJson(_googleCredentialsJson)
-                    .CreateScoped(PublisherServiceApiClient.DefaultScopes);
-
-            var channelCreds = credential.ToChannelCredentials();
-
-            publisher = await PublisherClient.CreateAsync(topicName,
-                new PublisherClient.ClientCreationSettings(credentials: channelCreds));
-
-            string normalizedPriority = priority?.ToLower() ?? "medium";
-            if (normalizedPriority != "high" && normalizedPriority != "medium" && normalizedPriority != "low")
-            {
-                normalizedPriority = "Medium"; // Default to medium if invalid value
-                _logger.LogWarning($"Invalid priority value '{priority}' normalized to 'Medium'");
-            }
-
-            var pubsubMessage = new PubsubMessage
-            {
-                Data = ByteString.CopyFromUtf8(message),
-                Attributes =
-                {
-                    { "priority", normalizedPriority }
-                }
-            };
-
-            string messageId = await publisher.PublishAsync(pubsubMessage);
         }
 
     }
