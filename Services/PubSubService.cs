@@ -1,5 +1,4 @@
 ﻿using Google.Cloud.PubSub.V1;
-using StackExchange.Redis;
 using Newtonsoft.Json;
 using Google.Apis.Auth.OAuth2;
 using Grpc.Auth;
@@ -81,13 +80,13 @@ namespace TicketingSystem.Services
                     messages.Add(message);
 
                     string text = message.Data.ToStringUtf8();
-                    Console.WriteLine($"Message {message.MessageId}: {text}");
+                    //Console.WriteLine($"Message {message.MessageId}: {text}");
 
                     if (message.Attributes != null)
                     {
                         foreach (var attribute in message.Attributes)
                         {
-                            Console.WriteLine($"{attribute.Key} = {attribute.Value}");
+                            //Console.WriteLine($"{attribute.Key} = {attribute.Value}");
                         }
                     }
 
@@ -106,5 +105,6 @@ namespace TicketingSystem.Services
             await startTask;
             return messages;
         }
+
     }
 }

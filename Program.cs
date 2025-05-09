@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TicketingSystem.Services;
+using TicketingSystem.Services.Caching;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,13 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = builder.Configuration["Auth:Google:ClientSecret"];
 });
 
+builder.Services.AddStackExchangeRedisCache(option =>
+{
+    option.Configuration = "localhost:6379"; //Environment.GetEnvironmentVariable("REDIS_URL");
+});
+
 builder.Services.AddScoped<PubSubService>();
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

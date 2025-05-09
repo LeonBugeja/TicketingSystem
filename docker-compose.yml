@@ -1,13 +1,17 @@
-version: '3.8'
-
 services:
-    webapp:
-        image: app
+    redis_db:
+        image: redis
         environment:
-            NODE_ENV: production
+            - ALLOW_EMPTY_PASSWORD=yes
+            - REDIS_MASTER_PORT_NUMBER=6379
+        ports:
+            - '6379:6379'
+    app:
+        image: 'ticketingsystem:latest'
+        environment:
+        - REDIS_URL=redis_db:6379
         build:
             context: .
             dockerfile: './Dockerfile'
         ports:
-            - '8080:80'
-            
+            - '8080:8080'
