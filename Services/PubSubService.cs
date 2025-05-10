@@ -80,7 +80,6 @@ namespace TicketingSystem.Services
                     messages.Add(message);
 
                     string text = message.Data.ToStringUtf8();
-                    //Console.WriteLine($"Message {message.MessageId}: {text}");
 
                     if (message.Attributes != null)
                     {
@@ -103,7 +102,24 @@ namespace TicketingSystem.Services
             await subscriber.StopAsync(CancellationToken.None);
 
             await startTask;
-            return messages;
+            return messages
+            .OrderBy(m => {
+                if (m.Attributes != null && m.Attributes.ContainsKey("priority"))
+                {
+                    string priority = m.Attributes["priority"];
+
+                    return priority switch
+                    {
+                        "High" => 1,
+                        "Medium" => 2,
+                        "Low" => 3,
+                        _ => 4
+                    };
+                }
+
+                return 5;
+            })
+            .ToList();
         }
 
     }

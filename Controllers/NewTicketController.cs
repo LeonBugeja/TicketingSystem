@@ -5,6 +5,7 @@ using Google.Apis.Auth.OAuth2;
 using TicketingSystem.Services;
 using Google.Cloud.Firestore;
 using System.Net;
+using Google.Protobuf.WellKnownTypes;
 
 namespace TicketingSystem.Controllers
 {
@@ -49,11 +50,7 @@ namespace TicketingSystem.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(
-            string title,
-            string description,
-            string priority,
-            IFormFileCollection attachments)
+        public async Task<IActionResult> Submit(string title, string description, string priority, IFormFileCollection attachments)
         {
             try
             {
@@ -106,29 +103,6 @@ namespace TicketingSystem.Controllers
                 else
                 {
                     _logger.LogInformation("No attachments provided");
-                }
-
-                var firestoreDict = new Dictionary<string, object>
-                {
-                    ["TicketId"] = ticketId,
-                    ["Title"] = title,
-                    ["Description"] = description,
-                    ["Priority"] = priority,
-                    ["Status"] = "Open",
-                    ["SubmittedAt"] = timestamp,
-                    ["SubmittedByEmail"] = userEmail,
-                    ["ImageUrls"] = imageUrls
-                };
-
-                try
-                {
-                    DocumentReference docRef = _firestoreDb.Collection($"tickets_{userEmail}").Document(ticketId);
-                    await docRef.SetAsync(firestoreDict);
-                    _logger.LogInformation($"Ticket {ticketId} saved to Firestore");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error saving to Firestore: {ex.Message}");
                 }
 
                 var ticketData = new

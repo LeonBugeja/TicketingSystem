@@ -1,0 +1,74 @@
+﻿@model List<TicketingSystem.Models.TicketsViewModel>
+@{
+    ViewData["Title"] = "View Tickets";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Open Tickets</h1>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No tickets found.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Submitted By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ticket in Model)
+                {
+                    <tr>
+                        <td>@ticket.TicketId</td>
+                        <td>@ticket.Title</td>
+                        <td>@ticket.Description</td>
+                        <td>
+                            <span class="badge @(ticket.Priority == "Low" ? "bg-secondary" :
+                                              ticket.Priority == "Medium" ? "bg-warning" :
+                                              ticket.Priority == "High" ? "bg-danger" : "bg-secondary")">
+                                @ticket.Priority
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(ticket.Status == "Open" ? "bg-warning" :
+                                              ticket.Status == "Closed" ? "bg-secondary" : "bg-secondary")">
+                                @ticket.Status
+                            </span>
+                        </td>
+                        <td>@ticket.SubmittedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@ticket.SubmittedByEmail</td>
+                        <td>
+                            <form asp-controller="ViewTickets" asp-action="CloseCachedTicket" method="post">
+                                <input type="hidden" name="ticketId" value="@ticket.TicketId" />
+
+                                <button type="submit" class="btn btn-dark">Close</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

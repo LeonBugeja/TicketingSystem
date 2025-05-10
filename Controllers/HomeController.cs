@@ -16,20 +16,18 @@ namespace TicketingSystem.Controllers;
 public class HomeController : Controller
 {
     private readonly PubSubService _pubSubService;
-    private readonly IRedisCacheService _cache;
     private readonly FirestoreDb _firestoreDb;
     private readonly string _googleCredentialsJson;
 
     public HomeController(IRedisCacheService cache)
     {
         _pubSubService = new PubSubService();
-        _cache = cache;
 
         _googleCredentialsJson = LoadCredentialJsonFromFile();
         var credential = GoogleCredential.FromJson(_googleCredentialsJson);
         _firestoreDb = new FirestoreDbBuilder
         {
-            ProjectId = "pftc-2025-leon", // Make sure this matches your Google Cloud project ID
+            ProjectId = "pftc-2025-leon",
             Credential = credential
         }.Build();
     }
@@ -52,7 +50,7 @@ public class HomeController : Controller
         var userEmail = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
 
         var tickets = await GetUserTicketsFromFirestore(userEmail);
-        var isTechnician = await IsUserTechnician(userEmail); // Make sure to await
+        var isTechnician = await IsUserTechnician(userEmail);
 
         var viewModel = new HomeViewModel
         {
