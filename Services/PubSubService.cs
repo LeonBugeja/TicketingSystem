@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Google.Apis.Auth.OAuth2;
 using Grpc.Auth;
 using Google.Protobuf;
+using Grpc.Core;
 
 namespace TicketingSystem.Services
 {
@@ -62,64 +63,31 @@ namespace TicketingSystem.Services
             string messageId = await publisher.PublishAsync(pubsubMessage);
         }
 
-        public async Task<List<PubsubMessage>> FetchMessagesAsync(int durationInSeconds = 7, bool acknowledge = true)
+        public async Task<List<PubsubMessage>> FetchMessagesAsync()
         {
             var subscriptionName = SubscriptionName.FromProjectSubscription(_projectId, _subscriptionId);
             var messages = new List<PubsubMessage>();
-
             var credential = GoogleCredential.FromJson(_googleCredentialsJson)
                     .CreateScoped(PublisherServiceApiClient.DefaultScopes);
             var channelCreds = credential.ToChannelCredentials();
-
             SubscriberClient subscriber = await SubscriberClient.CreateAsync(subscriptionName, new SubscriberClient.ClientCreationSettings(credentials: channelCreds));
-
             Task startTask = subscriber.StartAsync(async (PubsubMessage message, CancellationToken cancel) =>
             {
                 try
                 {
+                    Console.WriteLine(message);
                     messages.Add(message);
-
-                    string text = message.Data.ToStringUtf8();
-
-                    if (message.Attributes != null)
-                    {
-                        foreach (var attribute in message.Attributes)
-                        {
-                            //Console.WriteLine($"{attribute.Key} = {attribute.Value}");
-                        }
-                    }
-
-                    return acknowledge ? SubscriberClient.Reply.Ack : SubscriberClient.Reply.Nack;
+                    return SubscriberClient.Reply.Ack;
                 }
                 catch (Exception ex)
                 {
                     return SubscriberClient.Reply.Nack;
                 }
             });
-
-            await Task.Delay(TimeSpan.FromSeconds(durationInSeconds));
-
+            await Task.Delay(TimeSpan.FromSeconds(5));
             await subscriber.StopAsync(CancellationToken.None);
-
             await startTask;
-            return messages
-            .OrderBy(m => {
-                if (m.Attributes != null && m.Attributes.ContainsKey("priority"))
-                {
-                    string priority = m.Attributes["priority"];
-
-                    return priority switch
-                    {
-                        "High" => 1,
-                        "Medium" => 2,
-                        "Low" => 3,
-                        _ => 4
-                    };
-                }
-
-                return 5;
-            })
-            .ToList();
+            return messages;
         }
 
     }

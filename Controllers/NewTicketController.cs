@@ -6,6 +6,7 @@ using TicketingSystem.Services;
 using Google.Cloud.Firestore;
 using System.Net;
 using Google.Protobuf.WellKnownTypes;
+using Google.Apis.Storage.v1.Data;
 
 namespace TicketingSystem.Controllers
 {
@@ -15,19 +16,38 @@ namespace TicketingSystem.Controllers
         private readonly ILogger<NewTicketController> _logger;
         private readonly string _googleCredentialsJson;
         private readonly PubSubService _pubSubService;
-        private readonly FirestoreDb _firestoreDb;
+        private readonly List<string> allowedUsers = new List<string>();
 
         public NewTicketController(ILogger<NewTicketController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _bucketName = "ticketing-system-bucketstore";
-
             _pubSubService = new PubSubService();
-
             _googleCredentialsJson = LoadCredentialJsonFromFile();
 
             var credential = GoogleCredential.FromJson(_googleCredentialsJson);
-            _firestoreDb = new FirestoreDbBuilder{ProjectId = "pftc-2025-leon", Credential = credential}.Build();
+
+            LoadTechnicians();
+        }
+
+        private async Task LoadTechnicians()
+        {
+            var credential = GoogleCredential.FromJson(_googleCredentialsJson);
+            var _firestoreDb = new FirestoreDbBuilder { ProjectId = "pftc-2025-leon", Credential = credential }.Build();
+
+            CollectionReference usersCollection = _firestoreDb.Collection("users");
+            Query query = usersCollection.WhereEqualTo("role", "technician");
+
+            List<string> technicianEmails = new List<string>();
+            QuerySnapshot snapshot = await query.GetSnapshotAsync();
+
+            foreach (DocumentSnapshot document in snapshot.Documents)
+            {
+                if (document.Exists)
+                {
+                    allowedUsers.Add(document.Id);
+                }
+            }
         }
 
         private string LoadCredentialJsonFromFile()
@@ -95,7 +115,23 @@ namespace TicketingSystem.Controllers
                                 contentType: file.ContentType,
                                 source: memoryStream);
 
-                            var imageUrl = $"https://storage.googleapis.com/{_bucketName}/{objectName}";
+                            //give access to the user who raised the ticket and all techs
+                            allowedUsers.Add(userEmail);
+
+                            var aclList = allowedUsers.Select(email => new ObjectAccessControl
+                            {
+                                Entity = $"user-{email}",
+                                Role = "READER"
+                            }).ToList();
+
+                            await storageClient.UpdateObjectAsync(new Google.Apis.Storage.v1.Data.Object
+                            {
+                                Bucket = _bucketName,
+                                Name = objectName,
+                                Acl = aclList
+                            });
+
+                            var imageUrl = $"https://storage.cloud.google.com/{_bucketName}/{objectName}?authuser=1";
                             imageUrls.Add(imageUrl);
                         }
                     }

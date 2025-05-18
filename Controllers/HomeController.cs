@@ -1,16 +1,9 @@
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Storage.v1.Data;
 using Google.Cloud.Firestore;
-using Google.Cloud.PubSub.V1;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
 using TicketingSystem.Models;
 using TicketingSystem.Services;
-using TicketingSystem.Services.Caching;
 
 namespace TicketingSystem.Controllers;
 public class HomeController : Controller
@@ -19,7 +12,7 @@ public class HomeController : Controller
     private readonly FirestoreDb _firestoreDb;
     private readonly string _googleCredentialsJson;
 
-    public HomeController(IRedisCacheService cache)
+    public HomeController()
     {
         _pubSubService = new PubSubService();
 

@@ -38,9 +38,6 @@ namespace TicketingSystem.Controllers
 
         public async Task<IActionResult> Index()
         {
-            //to be called from cronjob
-            //await FetchNewTicketsAndUpdateCache();
-
             var tickets = await GetTicketsFromCache();
             var sortedTickets = tickets.OrderBy(t => t.Priority).ToList();
 
@@ -48,9 +45,9 @@ namespace TicketingSystem.Controllers
         }
 
         [HttpGet]
-        private async Task FetchNewTicketsAndUpdateCache()
+        public async Task FetchNewTicketsAndUpdateCache()
         {
-            var pubSubMessages = await _pubSubService.FetchMessagesAsync(durationInSeconds: 5, acknowledge: true);
+            var pubSubMessages = await _pubSubService.FetchMessagesAsync();
 
             if (pubSubMessages == null || !pubSubMessages.Any())
             {
@@ -70,6 +67,12 @@ namespace TicketingSystem.Controllers
                 {
                     newTickets.Add(ticket);
                     existingIds.Add(ticket.TicketId);
+
+                    await MailgunService.SendEmailAsync(
+                        $"New Ticket | ID: {ticket.TicketId}", 
+                        $"Dear Technicians, \r\n\r\n A new Ticket has been raised by {ticket.SubmittedByEmail} regarding `{ticket.Title}`",
+                        ticket.TicketId
+                        );
                 }
             }
 
@@ -96,19 +99,7 @@ namespace TicketingSystem.Controllers
                 return new List<TicketsViewModel>();
             }
 
-            return tickets
-                .OrderBy(ticket => {
-                    string priority = ticket.Priority?.ToString() ?? "";
-
-                    return priority switch
-                    {
-                        "High" => 1,
-                        "Medium" => 2,
-                        "Low" => 3,
-                        _ => 4
-                    };
-                })
-                .ToList();
+            return tickets;
         }
 
         private async Task SaveTicketsToCache(List<TicketsViewModel> tickets)
